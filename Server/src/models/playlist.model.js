@@ -13,6 +13,7 @@ const playlistSchema = new mongoose.Schema({
 
     videoCount: {
         type: Number,
+        default: 0,
     },
 }, { timestamps: true });
 
