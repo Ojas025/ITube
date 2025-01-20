@@ -1,4 +1,4 @@
-import { ApiError } from "../utils/ApiError";
+import { ApiError } from "../utils/ApiError.js";
 import { validationResult } from "express-validator";
 
 const handleValidationErrors = (req, res, next) => {
@@ -13,7 +13,8 @@ const handleValidationErrors = (req, res, next) => {
         [err.path]: err.msg
     }));
 
+    console.log(formattedErrors);
     throw new ApiError(422, "Data validation error", formattedErrors);
 }
 
-export default handleValidationErrors
+export { handleValidationErrors }

@@ -20,15 +20,19 @@ const handleUserRegistration = asyncHandler( async (req, res) => {
     }
 
     // Upload profile pic if provided
-    console.log(req.files);
-    console.log(req.files.profileImage[0]);
+    // console.log(req.file);
 
-    const profileImageLocalPath = req.files?.profileImage[0]?.path;
+    const profileImageLocalPath = req.file?.path;
+    console.log(profileImageLocalPath);
 
     let profileImage = null;
     if (profileImageLocalPath){
+        // Upload image to cloudinary
         profileImage = await uploadFileToCloudinary(profileImageLocalPath);
-        console.log("Cloudinary response: ", profileImage);
+        // console.log("Cloudinary response: ", profileImage);
+
+        // Delete image from local storage
+
     }
 
     const user = await User.create({

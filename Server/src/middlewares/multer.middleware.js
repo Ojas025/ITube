@@ -5,8 +5,21 @@ const storage = multer.diskStorage({
         cb(null, "./public/temp");
     },
     filename: (req, file, cb) => {
-        const suffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-        cb(null, file.fieldname + '-' + suffix);
+        let fileExtension = "";
+        if (file.originalname.split(".").length > 1){
+            fileExtension = file.originalname.substring(file.originalname.lastIndexOf("."));
+        }
+
+        const fileName = file.originalname
+            .toLowerCase()
+            .split(" ")
+            .join("-")
+            ?.split(".")[0];
+
+        cb(
+            null,
+            fileName + Date.now() + Math.ceil(Math.random() * 1e5) + fileExtension
+        );
     }
 })
 
