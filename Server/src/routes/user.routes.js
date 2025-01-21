@@ -1,7 +1,7 @@
 import { Router } from 'express'
-import { handleUserLogin, handleUserRegistration, handleUserLogout } from '../controllers/user.controllers.js';
+import { handleUserLogin, handleUserRegistration, handleUserLogout, handleRefreshAccessToken } from '../controllers/user.controllers.js';
 import { handleValidationErrors } from '../validators/handleValidationErrors.js'
-import { userLoginValidator, userRegistrationValidator } from '../validators/user.validator.js';
+import { userRegistrationValidator, userLoginValidator } from '../validators/user.validator.js';
 import { upload } from '../middlewares/multer.middleware.js';
 import { checkAuthentication } from '../middlewares/auth.middleware.js';
 
@@ -29,6 +29,12 @@ router
     .post(
         checkAuthentication,
         handleUserLogout
+    )
+
+router
+    .route('/refresh-token')
+    .post(
+        handleRefreshAccessToken
     )
 
 export default router

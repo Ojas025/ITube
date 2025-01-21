@@ -11,7 +11,8 @@ const checkAuthentication = asyncHandler(async (req, res, next) => {
     }
 
     try {
-        const payload = validateToken(token);
+        const payload = validateToken(token, process.env.ACCESS_TOKEN_SECRET);
+
         req.user = payload;
         next();
     }

@@ -23,7 +23,6 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: [true, "Password is required"],
         trim: true,
-        lowercase: true
     },
 
     profileImage: {
@@ -81,10 +80,10 @@ userSchema.methods.generateRefreshToken = function () {
         {
             _id: this._id
         },
-        REFRESH_TOKEN_SECRET,
+        process.env.REFRESH_TOKEN_SECRET,
         {
             algorithm: 'HS256',
-            expiresIn: REFRESH_TOKEN_EXPIRY
+            expiresIn: process.env.REFRESH_TOKEN_EXPIRY
         }
     );
 }
