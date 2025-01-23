@@ -13,14 +13,15 @@ cloudinary.config({
 // 1.Upload file to the server -> Local storage using multer
 // 2.Fetch file from Local storage and upload it to cloudinary
 // Delete file locally
-const uploadFileToCloudinary = async (localFilePath) => {
+const uploadFileToCloudinary = async (localFilePath, publicId) => {
     if (!localFilePath) return null;
 
     try {
         const response = await cloudinary.uploader.upload(
             localFilePath,
             {
-                resource_type: "auto"
+                resource_type: "auto",
+                public_id: publicId? publicId : undefined
             }
         )
     

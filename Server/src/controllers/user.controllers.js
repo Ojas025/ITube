@@ -45,9 +45,6 @@ const handleUserRegistration = asyncHandler( async (req, res) => {
         // Upload image to cloudinary
         profileImage = await uploadFileToCloudinary(profileImageLocalPath);
         // console.log("Cloudinary response: ", profileImage);
-
-        // Delete image from local storage
-
     }
 
     const user = await User.create({
@@ -144,38 +141,126 @@ const handleRefreshAccessToken = asyncHandler(async (req, res) => {
     // Fetch the client side refresh token
     // Decode the incoming refresh token to get the user id
     // Verify whether both the refresh tokens are the same
-    const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken;
+    try {
+        const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken;
+    
+        if (!incomingRefreshToken){
+            throw new ApiError(401, "Unauthorized access");
+        }
+    
+        const decodedRefreshToken = validateToken(incomingRefreshToken, process.env.REFRESH_TOKEN_SECRET);
+    
+        const user = await User.findById(decodedRefreshToken?._id);
+    
+        if (!user){
+            throw new ApiError(401, "Refresh token invalid");
+        }
+    
+        const { accessToken, refreshToken } = generateAccessAndRefreshTokens(user);
+    
+        const options = {
+            httpOnly: true,
+            secure: true
+        };
+    
+        return res
+            .status(200)
+            .cookie("accessToken", accessToken, options)
+            .cookie("refreshToken", refreshToken, options)
+            .json(new ApiResponse(200, { accessToken, refreshToken }, "Access Token Refreshed"));
+    } catch (error) {
+        throw new ApiError(400, error.message);   
+    }
+});
 
-    if (!incomingRefreshToken){
-        throw new ApiError(401, "Unauthorized access");
+const handleChangeUserPassword = asyncHandler(async (req, res) => {
+    // JWT verification
+    // Fetch current password entered form req.body
+    // Fetch the user
+    // Verify if the passwords match
+    // If not, return an error
+    // If yes, update the password 
+    const { oldPassword, newPassword } = req.body;
+
+    if (oldPassword === newPassword) {
+        throw new ApiError(400, "No changes in password detected");
     }
 
-    const decodedRefreshToken = validateToken(incomingRefreshToken, process.env.REFRESH_TOKEN_SECRET);
-
-    const user = await User.findById(decodedRefreshToken?._id);
-
-    if (!user){
-        throw new ApiError(401, "Refresh token invalid");
+    if (!oldPassword || !newPassword) {
+        throw new ApiError(404, "All fields are compulsary");
     }
 
-    const { accessToken, refreshToken } = generateAccessAndRefreshTokens(user);
+    const user = await User.findById(req.user?._id);
 
-    const options = {
-        httpOnly: true,
-        secure: true
-    };
+    if (!user) {
+        throw new ApiError(404, "User does not exist");
+    }
+
+    if (user.isCorrectPassword(oldPassword)){
+        // Entered old password matches
+        // update the password
+        user.password = newPassword;
+        await user.save({ validateBeforeSave: false });
+    }
+    else{
+        throw new ApiError(400, "Invalid Old Password");
+    }
 
     return res
         .status(200)
-        .cookie("accessToken", accessToken, options)
-        .cookie("refreshToken", refreshToken, options)
-        .json(new ApiResponse(200, { accessToken, refreshToken }, "Access Token Refreshed"));
+        .json(new ApiResponse(200, {}, "Password changed successfully"));
+});
 
+const getCurrentUser = asyncHandler((req, res) => {
+    return res
+        .status(200)
+        .json(200, req.user, "Current user fetched successfully");
+});
+
+const handleUpdateAccountDetails = asyncHandler(async (req,res) => {
+    // Think of something else for email updation
+    if (!req.body) {
+        throw new ApiError(400, "Empty request body");
+    }
+
+    const user = await findByIdAndUpdate(
+        req.user?._id,
+        req.body,
+        { new: true }
+    ).select("-password");
+
+    return res
+        .status(202)
+        .json(new ApiResponse(202, user, "User details updated successfully"));
+});
+
+const handleUpdateProfileImage = asyncHandler(async (req, res) => {
+    const newProfileImageLocalPath = req.file?.path;
+
+    if (!newProfileImageLocalPath){
+        throw new ApiError(404, "Image not found");
+    }
+
+    // Upload to cloudinary
+    // The cloudinary public id is embedded in the url
+    const publicId = req.user?.profileImageUrl.split('/').pop().split('.')[0];
+
+    // Upload the file to cloudinary with the same public id
+    // The cache update may take some time
+    const cloudinaryResponse = await uploadFileToCloudinary(newProfileImageLocalPath, publicId);
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, { profileImageUrl: cloudinaryResponse.url } , "Profile Image updated successfully! Update may take some time to display"));
 })
 
 export {
     handleUserRegistration,
     handleUserLogin,
     handleUserLogout,
-    handleRefreshAccessToken
+    handleRefreshAccessToken,
+    handleChangeUserPassword,
+    getCurrentUser,
+    handleUpdateAccountDetails,
+    handleUpdateProfileImage
 }
