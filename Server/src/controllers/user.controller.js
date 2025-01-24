@@ -119,8 +119,8 @@ const handleUserLogout = asyncHandler( async (req, res) => {
     await User.findByIdAndUpdate(
         req.user._id,
         {
-            $set: {
-                refreshToken: ''
+            $unset: {
+                refreshToken: 1 // This removes the flagged field from the document
             }
         }
     );
