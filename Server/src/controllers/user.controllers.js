@@ -254,6 +254,147 @@ const handleUpdateProfileImage = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, { profileImageUrl: cloudinaryResponse.url } , "Profile Image updated successfully! Update may take some time to display"));
 })
 
+const handleGetChannelData = asyncHandler(async (req, res) => {
+    // What do i need?
+    // username ( channel owner username )
+    // email
+    // profileImageUrl ( cloudinary url )
+    // subscriber count (use aggregation queries)
+    // subscription count ( use aggregation queries )
+    // channel videos ( cloudinary urls )
+    // isSubscribed => (req.user._id === subscription.subscriber._id)
+    
+    const { username } = req.params;
+
+    if (!username?.trim()){
+        throw new ApiError(404, "username is required");
+    }
+
+    const channel = await User.aggregate([
+        {
+            $match: {
+                username: username
+            }
+        },
+
+        {
+                $lookup: {
+                    from: "subscriptions",
+                    localField: "_id",
+                    foreignField: "channel",
+                    as: "subscribers"
+                }
+        },
+
+        {
+            $lookup: {
+                from: "subscriptions",
+                localField: "_id",
+                foreignField: "subscriber",
+                as: "subscribedChannels"
+            }
+        },
+
+        {
+            $addFields: {
+                subscriberCount: {
+                    $size: "$subscribers"
+                },
+
+                subscriptionCount: {
+                    $size: "subscribedChannels"
+                },
+
+                isSubscribed: {
+                    if: { $in: [req.user?._id, "$subscribers.subscriber"] },
+                    then: true,
+                    else:  false
+                }
+            }
+        },
+
+        {
+            $project: {
+                username: 1,
+                profileImageUrl: 1,
+                subscriberCount: 1,
+                subscriptionCount: 1,
+                isSubscribed: 1,
+                email: 1
+            }
+        }
+    ]);
+
+    if (!channel?.length){
+        throw new ApiError(404, "Channel does not exist");
+    }
+
+    console.log(channel);
+    
+    return res
+        .status(200)
+        .json(new ApiResponse(200, channel[0], "Channel details fetched successfully")); 
+});
+
+const handleGetUserWatchHistory = asyncHandler(async (req, res) => {
+    const watchHistoryResponse = await User.aggregate([
+        {
+            $match: {
+                _id: new mongoose.Types.ObjectId(req.user?._id)
+            }
+        },
+
+        {
+            $lookup: {
+                from: "videos",
+                localField: "watchHistory",
+                foreignField: "_id",
+                as: "watchHistory",
+                pipeline: [
+                    {
+                        $lookup: {
+                            from: "users",
+                            localField: "owner",
+                            foreignField: "_id",
+                            as: "owner",
+                            pipeline: [
+                                {
+                                    $project: {
+                                        username: 1,
+                                        profileImageUrl: 1,
+                                    }
+                                },
+
+                                {
+                                    $addFields: {
+                                        owner: {
+                                            $first: "$owner"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+
+        {
+            $project: {
+                watchHistory: 1
+            }
+        }
+    ]);
+
+    if (!watchHistoryResponse?.length || !watchHistoryResponse[0]){
+        throw new ApiError(404, "Empty watch history");
+    }
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, watchHistoryResponse[0], "Watch History fetched successfully"));
+});
+
 export {
     handleUserRegistration,
     handleUserLogin,
@@ -262,5 +403,7 @@ export {
     handleChangeUserPassword,
     getCurrentUser,
     handleUpdateAccountDetails,
-    handleUpdateProfileImage
+    handleUpdateProfileImage,
+    handleGetChannelData,
+    handleGetUserWatchHistory,
 }
