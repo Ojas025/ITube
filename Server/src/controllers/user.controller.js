@@ -2,7 +2,7 @@ import mongoose from 'mongoose'
 import { ApiError } from '../utils/ApiError.js'
 import { ApiResponse } from '../utils/ApiResponse.js'
 import { asyncHandler } from '../utils/asyncHandler.js'
-import { uploadFileToCloudinary } from '../services/cloudinary.js'
+import { uploadFileToCloudinary, deleteFileFromCloudinary } from '../services/cloudinary.js'
 import { User } from '../models/user.model.js'
 import { validateToken } from '../utils/auth.js'
 
@@ -244,14 +244,15 @@ const handleUpdateProfileImage = asyncHandler(async (req, res) => {
     // Upload to cloudinary
     // The cloudinary public id is embedded in the url
     const publicId = req.user?.profileImageUrl.split('/').pop().split('.')[0];
+    await deleteFileFromCloudinary(publicId);
 
     // Upload the file to cloudinary with the same public id
     // The cache update may take some time
-    const cloudinaryResponse = await uploadFileToCloudinary(newProfileImageLocalPath, publicId);
+    const cloudinaryResponse = await uploadFileToCloudinary(newProfileImageLocalPath);
 
     return res
         .status(200)
-        .json(new ApiResponse(200, { profileImageUrl: cloudinaryResponse.url } , "Profile Image updated successfully! Update may take some time to display"));
+        .json(new ApiResponse(200, { profileImageUrl: cloudinaryResponse?.url } , "Profile Image updated successfully! Update may take some time to display"));
 })
 
 const handleGetChannelData = asyncHandler(async (req, res) => {
