@@ -2,6 +2,8 @@ import express from 'express'
 import { upload } from '../middlewares/multer.middleware.js';
 import { checkAuthentication } from '../middlewares/auth.middleware.js';
 import { deleteVideo, getAllVideos, getVideoById, publishVideo, togglePublishStatus, updateVideoDetails } from '../controllers/video.controller.js';
+import { mongoIdValidator } from '../validators/mongoDB.validator.js';
+import { handleValidationErrors } from '../validators/handleValidationErrors.js';
 
 const router = express.Router();
 
@@ -29,12 +31,12 @@ router
 
 router
     .route("/:videoId")
-    .get(getVideoById)
-    .patch(checkAuthentication, upload.single("thumbnail"), updateVideoDetails)
-    .delete(checkAuthentication, deleteVideo)
+    .get(mongoIdValidator(), handleValidationErrors, getVideoById)
+    .patch(checkAuthentication, mongoIdValidator(), handleValidationErrors, upload.single("thumbnail"), updateVideoDetails)
+    .delete(checkAuthentication, mongoIdValidator(), handleValidationErrors, deleteVideo)
 
 router
     .route("/toggle/publish/:videoId")
-    .patch(togglePublishStatus)
+    .patch(mongoIdValidator(), handleValidationErrors, togglePublishStatus)
 
 export default router;
