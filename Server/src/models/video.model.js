@@ -7,13 +7,12 @@ const videoSchema = new mongoose.Schema({
         ref: "User"
     },
 
-    channel: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Channel"
-    },
-
     thumbnail: {
-        type: String
+        type: {
+            url: String,
+            public_id: String,
+        },
+        required: true
     },
 
     title: {
@@ -33,16 +32,14 @@ const videoSchema = new mongoose.Schema({
     },
 
     videoFile: {
-        type: String,
+        type: {
+            url: String,
+            public_id: String,
+        },
         required: true
     },
 
     views: {
-        type: Number,
-        default: 0,
-    },
-
-    likes: {
         type: Number,
         default: 0,
     },

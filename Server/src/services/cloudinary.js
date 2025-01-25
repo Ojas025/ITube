@@ -1,6 +1,7 @@
 // Import cloudinary
 import { v2 as cloudinary } from 'cloudinary'
 import fs from 'fs'
+import { ApiError } from '../utils/ApiError';
 
 // Config cloudinary
 cloudinary.config({
@@ -13,7 +14,7 @@ cloudinary.config({
 // 1.Upload file to the server -> Local storage using multer
 // 2.Fetch file from Local storage and upload it to cloudinary
 // Delete file locally
-const uploadFileToCloudinary = async (localFilePath, publicId) => {
+const uploadFileToCloudinary = async (localFilePath) => {
     if (!localFilePath) return null;
 
     try {
@@ -21,7 +22,6 @@ const uploadFileToCloudinary = async (localFilePath, publicId) => {
             localFilePath,
             {
                 resource_type: "auto",
-                public_id: publicId? publicId : undefined
             }
         )
     
@@ -35,4 +35,26 @@ const uploadFileToCloudinary = async (localFilePath, publicId) => {
     }
 }
 
-export { uploadFileToCloudinary }
+const deleteFileFromCloudinary = async (publicId, resource_type = "image") => {
+    if (!publicId) return null;
+
+    try {
+        const response = await cloudinary.uploader.destroy(
+            publicId,
+            {
+                resource_type: resource_type
+            }
+        );
+
+        console.log("File delete from cloudinary");
+        return response;
+    }
+    catch(error){
+        throw new ApiError(400, "Error deleting file from cloudinary");
+    }
+}
+
+export { 
+    uploadFileToCloudinary,
+    deleteFileFromCloudinary
+}

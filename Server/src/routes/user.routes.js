@@ -10,7 +10,7 @@ import {
         handleUpdateProfileImage,
         handleGetChannelData,
         handleGetUserWatchHistory
-    } from '../controllers/user.controllers.js';
+    } from '../controllers/user.controller.js';
 import { handleValidationErrors } from '../validators/handleValidationErrors.js'
 import { userRegistrationValidator, userLoginValidator } from '../validators/user.validator.js';
 import { upload } from '../middlewares/multer.middleware.js';

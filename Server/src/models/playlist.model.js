@@ -9,12 +9,7 @@ const playlistSchema = new mongoose.Schema({
     videos: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: "Videos",
-    }],
-
-    videoCount: {
-        type: Number,
-        default: 0,
-    },
+    }]
 }, { timestamps: true });
 
 export const Playlist = mongoose.model("Playlist", playlistSchema);
