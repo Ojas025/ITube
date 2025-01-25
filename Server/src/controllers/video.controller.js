@@ -4,28 +4,33 @@ import { ApiResponse } from '../utils/ApiResponse.js'
 import { asyncHandler } from '../utils/asyncHandler.js'
 import { uploadFileToCloudinary } from '../services/cloudinary.js'
 import { Video } from '../models/video.model.js'
+import { User } from '../models/user.model.js'
 
 // Functionalities to be added:
 // 1. getAllVideos
-// 2. publishVideo
-// 3. fetchVideoById
+// 2. publishVideo --> ✅
+// 3. fetchVideoById --> ✅
 // 4. updateVideoDetails
-// 5. deleteVideo
-// 6. togglePublishStatus
+// 5. deleteVideo --> ✅
+// 6. togglePublishStatus --> ✅
 
 const getAllVideos = asyncHandler(async (req, res) => {
-
+    // Pending
 });
 
 const publishVideo = asyncHandler(async (req, res) => {
     // Fetch title, owner details, description, video
     const { title, description } = req.body;
 
-    const videoLocalPath = req.files[0]?.path;
-    const thumbnailLocalPath = req.files[1]?.path;
+    const videoLocalPath = req.files?.videoFile[0].path;
+    const thumbnailLocalPath = req.files?.thumbnail[0].path;
 
     if (!videoLocalPath){
-        throw new ApiError(404, "Video does not exist");
+        throw new ApiError(404, "Video is required");
+    }
+
+    if (!thumbnailLocalPath) {
+        throw new ApiError(404, "Thumbnail is required");
     }
 
     const videoUploadResponse = await uploadFileToCloudinary(videoLocalPath);
@@ -42,8 +47,15 @@ const publishVideo = asyncHandler(async (req, res) => {
         description: description,
         owner: req.user?._id,
         duration: videoUploadResponse?.duration,
-        videoFile: videoUploadResponse?.url,
-        isPublished: true
+        isPublished: true,
+        videoFile: {
+            url: videoUploadResponse?.url,
+            public_id: videoUploadResponse?.public_id
+        },
+        thumbnail: {
+            url: thumbnailUploadResponse?.url,
+            public_id: thumbnailUploadResponse?.public_id
+        }
     });
 
     if (!video){
@@ -56,20 +68,153 @@ const publishVideo = asyncHandler(async (req, res) => {
 });
 
 const getVideoById = asyncHandler(async (req, res) => {
+    // User clicked on a video
+    // Add to watch history
+    // Increment views
     const { videoId } = req.params;
 
-    const video = await Video.findById(videoId);
+    // thumbnail
+    // title
+    // desc
+    // likes (like model)
+    // views + 1
+    // owner details (user model)
+    const video = await Video.aggregate([
+        {
+            $match: {
+                _id: new mongoose.Types.ObjectId(videoId)
+            }
+        },
+
+        {
+            $lookup: {
+                from: "likes",
+                localField: "_id",
+                foreignField: "video",
+                as: "likes"
+            }
+        },
+
+        {
+            $lookup: {
+                from: "users",
+                localField: "owner",
+                foreignField: "_id",
+                as: "owner",
+                pipeline: [
+                    {
+                        $lookup: {
+                            from: "subscriptions",
+                            localField: "_id",
+                            foreignField: "channel",
+                            as: "subscribers"
+                        }
+                    },
+
+                    {
+                        $addFields: {
+                            subscribers: {
+                                $size: "$subscribers"
+                            },
+
+                            isSubscribed: {
+                                $cond: {
+                                    if: {
+                                        $in: [req.user?._id, "$subscribers.subscriber"]
+                                    },
+                                    then: true,
+                                    else: false 
+                                }
+                            }
+                        }
+                    },
+
+                    {
+                        $project: {
+                            username: 1,
+                            profileImageUrl: 1,
+                            subscribers: 1,
+                            isSubscribed: 1
+                        }
+                    }
+                ]
+            }
+        },
+
+        {
+            $addFields: {
+
+                isLiked: {
+                    $cond: {
+                        if: {
+                            $in: [req.user?._id, "$likes.likedBy"]
+                        },
+                        then: true,
+                        else: false
+                    }
+                },
+
+                likes: {
+                    $size: "$likes"
+                },
+
+                owner: {
+                    $first: "$owner",
+                },
+
+            }
+        },
+
+        {
+            $project: {
+                owner: 1,
+                likes: 1,
+                isLiked: 1,
+                isSubscribed: 1,
+                subscribers: 1,
+                duration: 1,
+                comments: 1,
+                views: 1,
+                title: 1,
+                description: 1,
+                profileImageUrl: 1,
+                createdAt: 1
+            }
+        }
+    ])
+
+    // Append video id to watch history
+    // Increment likes count
 
     if (!video){
         throw new ApiError(404, "Video does not exist");
     }
 
+    await User.findByIdAndUpdate(
+        req.user?._id,
+        {
+            $addToSet: {
+                watchHistory: videoId
+            }
+        }
+    );
+
+    await Video.findByIdAndUpdate(
+        videoId,
+        {
+            $inc: {
+                views: 1
+            }
+        }
+    );
+
     return res
         .status(200)
-        .json(200, video, "Video fetched successfully");
+        .json(200, video[0], "Video fetched successfully");
 });
 
 const updateVideoDetails = asyncHandler(async (req, res) => {
+    // Pending
     const { videoId } = req.params;
 
     const video = await Video.findById(videoId);
@@ -103,6 +248,7 @@ const updateVideoDetails = asyncHandler(async (req, res) => {
 });
 
 const deleteVideo = asyncHandler(async (req, res) => {
+    // Pending
     const { videoId } = req.params;
 
     await Video.findByIdAndDelete(videoId);
@@ -113,6 +259,7 @@ const deleteVideo = asyncHandler(async (req, res) => {
 });
 
 const togglePublishStatus = asyncHandler(async (req, res) => {
+    // Pending
     const { videoId } = req.params;
 
     if (!videoId) {
