@@ -25,6 +25,8 @@ import commentRouter from './routes/comment.routes.js'
 import subscriptionRouter from './routes/subscription.routes.js'
 import tweetRouter from './routes/tweet.routes.js'
 import playlistRouter from './routes/playlist.routes.js'
+import dashboardRouter from './routes/dashboard.routes.js'
+import healthCheckRouter from './routes/healthcheck.routes.js'
 
 app.use("/api/users", userRouter);
 app.use("/api/videos", videoRouter);
@@ -33,5 +35,7 @@ app.use("/api/comments", commentRouter);
 app.use("/api/subscription", subscriptionRouter);
 app.use("/api/tweet", tweetRouter);
 app.use("/api/playlist", playlistRouter);
+app.use("/api/dashboard", dashboardRouter);
+app.use("/api/healthcheck", healthCheckRouter);
 
 export { app }
