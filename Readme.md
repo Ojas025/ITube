@@ -1,5 +1,5 @@
-# ITube - A Video platform
+# ITube
 
-This is a backend implementation attempt for a yt like platform
+This is a backend implementation attempt for a yt + threads platform
 
 - [Model link](https://app.eraser.io/workspace/thskeG2aRtwqPxaQwlZq?origin=share)
