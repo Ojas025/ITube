@@ -1,6 +1,6 @@
 import express from 'express'
-import { checkAuthentication } from '../middlewares/auth.middleware';
-import { getChannelStats, getChannelVideos } from '../controllers/dashboard.controller';
+import { checkAuthentication } from '../middlewares/auth.middleware.js';
+import { getChannelStats, getChannelVideos } from '../controllers/dashboard.controller.js';
 
 const router = express.Router();
 

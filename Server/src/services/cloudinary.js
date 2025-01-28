@@ -1,7 +1,7 @@
 // Import cloudinary
 import { v2 as cloudinary } from 'cloudinary'
 import fs from 'fs'
-import { ApiError } from '../utils/ApiError';
+import { ApiError } from '../utils/ApiError.js';
 
 // Config cloudinary
 cloudinary.config({

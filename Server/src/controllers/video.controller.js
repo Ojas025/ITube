@@ -15,7 +15,7 @@ import { User } from '../models/user.model.js'
 // 6. togglePublishStatus --> ✅
 
 const getAllVideos = asyncHandler(async (req, res) => {
-    // Pending
+    const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query;
 });
 
 const publishVideo = asyncHandler(async (req, res) => {

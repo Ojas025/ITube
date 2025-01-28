@@ -1,5 +1,5 @@
 import express from 'express'
-import mongoIdValidator from '../validators/mongoDB.validator.js';
+import { mongoIdValidator } from '../validators/mongoDB.validator.js';
 import { handleValidationErrors } from '../validators/handleValidationErrors.js';
 import { getAllChannelSubscribers, getAllSubscribedChannels, toggleSubscription } from '../controllers/subscription.controller.js';
 

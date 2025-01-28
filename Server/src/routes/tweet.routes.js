@@ -1,8 +1,8 @@
 import express from 'express'
 import { handleValidationErrors } from '../validators/handleValidationErrors.js';
 import { createTweet, deleteTweet, getUserTweets, updateTweet } from '../controllers/tweet.controller.js';
-import mongoIdValidator from '../validators/mongoDB.validator.js';
-import tweetValidator from '../validators/tweet.validator.js';
+import { mongoIdValidator } from '../validators/mongoDB.validator.js';
+import { tweetValidator } from '../validators/tweet.validator.js';
 
 const router = express.Router();
 
