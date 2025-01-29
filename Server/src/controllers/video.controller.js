@@ -15,7 +15,84 @@ import { User } from '../models/user.model.js'
 // 6. togglePublishStatus --> ✅
 
 const getAllVideos = asyncHandler(async (req, res) => {
+    // sortType should be 1 or -1
     const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query;
+    const pipeline = [];
+
+    if (userId){
+        pipeline.push({
+            $match: {
+                owner: new mongoose.Types.ObjectId(userId)
+            },
+        });
+    }
+
+    pipeline.push({
+        $match: {
+            isPublished: true
+        },
+    });
+
+    // A text index has been created in mongodb for search query
+    if (query){
+        pipeline.push({
+            $match: {
+                $text: { $search: `${query}` }
+            }
+        });
+    }
+
+    if (sortBy && sortType){
+        pipeline.push({
+            $sort: {
+                [sortBy]: sortType,
+            },
+        });
+    }
+    else{
+        pipeline.push({
+            $sort: {
+                createdAt: -1
+            },
+        });
+    }
+
+
+    pipeline.push(
+        {
+            $lookup: {
+                from: "users",
+                localField: "owner",
+                foreignField: "_id",
+                as: "owner",
+                pipeline: [
+                    {
+                        $project: {
+                            username: 1,
+                            profileImageUrl: 1
+                        },
+                    },
+                ],
+            },
+        },
+
+        {
+            $unwind: "$owner"
+        }
+    );
+
+    const aggregatedVideo = await Video.aggregate(pipeline);
+
+    const options = {
+        page: parseInt(page, 10),
+        limit: parseInt(limit, 10),
+    };
+
+    const videos = await aggregatedVideo.aggregatePaginate(aggregatedVideo, options);
+
+    return res  
+        .status(200)
+        .json(new ApiResponse(200, videos, "Videos fetched successfully"));
 });
 
 const publishVideo = asyncHandler(async (req, res) => {
